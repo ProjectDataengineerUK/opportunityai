@@ -86,12 +86,6 @@ resource "google_secret_manager_secret" "freelancer_token" {
   }
 }
 
-resource "google_secret_manager_secret_version" "freelancer_token_v1" {
-  secret      = google_secret_manager_secret.freelancer_token.id
-  secret_data = "placeholder"
-  lifecycle { ignore_changes = [secret_data] }
-}
-
 resource "google_secret_manager_secret" "freelancer_client_id" {
   secret_id  = "freelancer-client-id"
   depends_on = [google_project_service.services]
@@ -100,11 +94,6 @@ resource "google_secret_manager_secret" "freelancer_client_id" {
   }
 }
 
-resource "google_secret_manager_secret_version" "freelancer_client_id_v1" {
-  secret      = google_secret_manager_secret.freelancer_client_id.id
-  secret_data = "placeholder"
-  lifecycle { ignore_changes = [secret_data] }
-}
 
 # ─── Service Account — Backend ───────────────────────────────────────────────
 
