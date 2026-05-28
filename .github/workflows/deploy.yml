@@ -66,6 +66,7 @@ jobs:
       - name: Build & push backend
         id: backend
         run: |
+          cp config.yaml backend/config.yaml
           IMAGE=${{ env.AR_HOST }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/backend
           docker build -t ${IMAGE}:${{ github.sha }} -t ${IMAGE}:latest ./backend
           docker push ${IMAGE}:${{ github.sha }}

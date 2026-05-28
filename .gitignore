@@ -3,6 +3,9 @@
 .env.local
 *.env
 
+# Config copiado pelo CI (não commitar)
+backend/config.yaml
+
 # Python
 __pycache__/
 *.pyc

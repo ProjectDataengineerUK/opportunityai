@@ -6,7 +6,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-COPY ../config.yaml /app/config.yaml
 
 ENV CONFIG_PATH=/app/config.yaml
 ENV PORT=8080
