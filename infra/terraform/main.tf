@@ -7,13 +7,10 @@ terraform {
     }
   }
 
-  # Habilitar após o primeiro `terraform apply` manual:
-  # 1. terraform apply -target=google_storage_bucket.tf_state
-  # 2. terraform init -migrate-state
-  # backend "gcs" {
-  #   bucket = "PROJECT_ID-tf-state-opportunityai"
-  #   prefix = "terraform/state"
-  # }
+  backend "gcs" {
+    bucket = "opportunity-ai-497718-tf-state-opportunityai"
+    prefix = "terraform/state"
+  }
 }
 
 provider "google" {
