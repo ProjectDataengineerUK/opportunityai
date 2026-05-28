@@ -78,31 +78,35 @@ resource "google_firestore_database" "default" {
   depends_on  = [google_project_service.services]
 }
 
-resource "google_firestore_index" "score_desc" {
-  collection = "opportunities"
-  fields {
-    field_path = "score"
-    order      = "DESCENDING"
-  }
-  fields {
-    field_path = "__name__"
-    order      = "DESCENDING"
-  }
-  depends_on = [google_firestore_database.default]
-}
 
 # ─── Secrets ─────────────────────────────────────────────────────────────────
 
 resource "google_secret_manager_secret" "freelancer_token" {
   secret_id  = "freelancer-token"
   depends_on = [google_project_service.services]
-  replication { auto {} }
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "freelancer_token_v1" {
+  secret      = google_secret_manager_secret.freelancer_token.id
+  secret_data = "placeholder"
+  lifecycle { ignore_changes = [secret_data] }
 }
 
 resource "google_secret_manager_secret" "freelancer_client_id" {
   secret_id  = "freelancer-client-id"
   depends_on = [google_project_service.services]
-  replication { auto {} }
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "freelancer_client_id_v1" {
+  secret      = google_secret_manager_secret.freelancer_client_id.id
+  secret_data = "placeholder"
+  lifecycle { ignore_changes = [secret_data] }
 }
 
 # ─── Service Account — Backend ───────────────────────────────────────────────
@@ -201,7 +205,11 @@ resource "google_service_account_iam_member" "cicd_wif_binding" {
 resource "google_cloud_run_v2_service" "backend" {
   name       = "opportunityai-backend"
   location   = var.region
-  depends_on = [google_project_service.services]
+  depends_on = [
+    google_project_service.services,
+    google_secret_manager_secret_version.freelancer_token_v1,
+    google_secret_manager_secret_version.freelancer_client_id_v1,
+  ]
 
   template {
     service_account = google_service_account.backend_sa.email
@@ -277,7 +285,7 @@ resource "google_cloud_run_v2_service" "frontend" {
       resources {
         limits = {
           cpu    = "1"
-          memory = "256Mi"
+          memory = "512Mi"
         }
       }
     }
