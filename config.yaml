@@ -1,0 +1,35 @@
+user_profile:
+  skills:
+    - Python
+    - Automação
+    - IA
+    - Machine Learning
+    - LLMs
+    - Data Engineering
+    - Backend
+    - APIs REST
+    - Cloud GCP
+  min_budget_usd: 200
+  languages:
+    - pt
+    - en
+
+score_weights:
+  skill_match: 0.35
+  budget: 0.25
+  close_chance: 0.20
+  competition: 0.10
+  clarity: 0.10
+
+decision_thresholds:
+  aplicar: 80
+  avaliar: 50
+
+gemini:
+  default_model: gemini-2.5-flash
+  advanced_model: gemini-2.5-pro
+
+sources:
+  remoteok: true
+  remotive: true
+  freelancer: true

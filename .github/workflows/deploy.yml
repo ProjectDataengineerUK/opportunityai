@@ -1,0 +1,84 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGION: us-central1
+  AR_HOST: us-central1-docker.pkg.dev
+  AR_REPO: opportunityai
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # necessário para Workload Identity
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Autenticação GCP via Workload Identity (sem chave de SA) ──
+      - name: Authenticate to GCP
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.AR_HOST }} --quiet
+
+      # ── Build e push das imagens ───────────────────────────────────
+      - name: Build & push backend
+        run: |
+          IMAGE=${{ env.AR_HOST }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/backend
+          docker build -t ${IMAGE}:${{ github.sha }} -t ${IMAGE}:latest ./backend
+          docker push ${IMAGE}:${{ github.sha }}
+          docker push ${IMAGE}:latest
+          echo "BACKEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Build & push frontend
+        run: |
+          IMAGE=${{ env.AR_HOST }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/frontend
+          docker build -t ${IMAGE}:${{ github.sha }} -t ${IMAGE}:latest ./frontend
+          docker push ${IMAGE}:${{ github.sha }}
+          docker push ${IMAGE}:latest
+          echo "FRONTEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
+
+      # ── Terraform ─────────────────────────────────────────────────
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.6"
+
+      - name: Terraform Init
+        working-directory: infra/terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.GCP_PROJECT_ID }}-tf-state-opportunityai" \
+            -backend-config="prefix=terraform/state"
+
+      - name: Terraform Apply
+        working-directory: infra/terraform
+        run: |
+          terraform apply -auto-approve \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="github_repo=${{ github.repository }}" \
+            -var="backend_image=${{ env.BACKEND_IMAGE }}" \
+            -var="frontend_image=${{ env.FRONTEND_IMAGE }}"
+
+      # ── Sumário do deploy ──────────────────────────────────────────
+      - name: Deploy summary
+        run: |
+          echo "### Deploy concluído :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend:** \`${{ env.BACKEND_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** \`${{ env.FRONTEND_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
