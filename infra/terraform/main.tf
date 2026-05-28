@@ -176,6 +176,7 @@ locals {
     "roles/artifactregistry.writer",
     "roles/storage.admin",
     "roles/secretmanager.viewer",
+    "roles/secretmanager.secretAccessor",
     "roles/iam.serviceAccountUser",
     "roles/datastore.owner",
     "roles/serviceusage.serviceUsageAdmin",
