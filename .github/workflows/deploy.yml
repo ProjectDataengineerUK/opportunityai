@@ -27,11 +27,11 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: backend/requirements-test.txt
 
-      - name: Install dependencies
+      - name: Install test dependencies
         working-directory: backend
-        run: pip install -r requirements.txt pytest pytest-cov
+        run: pip install -r requirements-test.txt
 
       - name: Run tests
         working-directory: backend
@@ -52,7 +52,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Authenticate to GCP
-        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
@@ -65,20 +64,22 @@ jobs:
         run: gcloud auth configure-docker ${{ env.AR_HOST }} --quiet
 
       - name: Build & push backend
+        id: backend
         run: |
           IMAGE=${{ env.AR_HOST }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/backend
           docker build -t ${IMAGE}:${{ github.sha }} -t ${IMAGE}:latest ./backend
           docker push ${IMAGE}:${{ github.sha }}
           docker push ${IMAGE}:latest
-          echo "BACKEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
+          echo "image=${IMAGE}:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: Build & push frontend
+        id: frontend
         run: |
           IMAGE=${{ env.AR_HOST }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/frontend
           docker build -t ${IMAGE}:${{ github.sha }} -t ${IMAGE}:latest ./frontend
           docker push ${IMAGE}:${{ github.sha }}
           docker push ${IMAGE}:latest
-          echo "FRONTEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
+          echo "image=${IMAGE}:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -98,12 +99,12 @@ jobs:
           terraform apply -auto-approve \
             -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
             -var="github_repo=${{ github.repository }}" \
-            -var="backend_image=${{ env.BACKEND_IMAGE }}" \
-            -var="frontend_image=${{ env.FRONTEND_IMAGE }}"
+            -var="backend_image=${{ steps.backend.outputs.image }}" \
+            -var="frontend_image=${{ steps.frontend.outputs.image }}"
 
       - name: Deploy summary
         run: |
           echo "### Deploy concluído :rocket:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend:** \`${{ env.BACKEND_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend:** \`${{ env.FRONTEND_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend:** \`${{ steps.backend.outputs.image }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** \`${{ steps.frontend.outputs.image }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
