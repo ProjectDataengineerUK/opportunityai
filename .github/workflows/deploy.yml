@@ -1,7 +1,9 @@
-name: Deploy
+name: CI/CD
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -11,18 +13,44 @@ env:
   AR_REPO: opportunityai
 
 jobs:
-  deploy:
-    name: Build & Deploy
+  # ── Job 1: Testes — roda em todo PR e push ────────────────────────
+  test:
+    name: Tests
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write   # necessário para Workload Identity
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── Autenticação GCP via Workload Identity (sem chave de SA) ──
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt pytest pytest-cov
+
+      - name: Run tests
+        working-directory: backend
+        run: pytest tests/ -v --tb=short --cov=agents --cov-report=term-missing
+
+  # ── Job 2: Deploy — só na main, após testes passarem ─────────────
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Authenticate to GCP
         id: auth
         uses: google-github-actions/auth@v2
@@ -36,7 +64,6 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.AR_HOST }} --quiet
 
-      # ── Build e push das imagens ───────────────────────────────────
       - name: Build & push backend
         run: |
           IMAGE=${{ env.AR_HOST }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/backend
@@ -53,7 +80,6 @@ jobs:
           docker push ${IMAGE}:latest
           echo "FRONTEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
 
-      # ── Terraform ─────────────────────────────────────────────────
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -75,7 +101,6 @@ jobs:
             -var="backend_image=${{ env.BACKEND_IMAGE }}" \
             -var="frontend_image=${{ env.FRONTEND_IMAGE }}"
 
-      # ── Sumário do deploy ──────────────────────────────────────────
       - name: Deploy summary
         run: |
           echo "### Deploy concluído :rocket:" >> $GITHUB_STEP_SUMMARY
