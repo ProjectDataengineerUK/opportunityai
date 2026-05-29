@@ -16,6 +16,8 @@ def _make_generator(proposal="Test proposal text.", suggested_price=500.0, estim
     gemini = MagicMock()
     gemini.generate_structured.return_value = ProposalResult(
         proposal=proposal,
+        proposal_direct=proposal,
+        proposal_consultive=proposal + " (consultive)",
         suggested_price=suggested_price,
         estimated_hours=estimated_hours,
     )
