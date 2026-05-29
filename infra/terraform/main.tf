@@ -271,7 +271,7 @@ resource "google_cloud_run_v2_service" "frontend" {
       image = var.frontend_image
 
       env {
-        name  = "NEXT_PUBLIC_API_URL"
+        name  = "BACKEND_URL"
         value = google_cloud_run_v2_service.backend.uri
       }
 
