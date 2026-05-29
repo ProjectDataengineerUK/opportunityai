@@ -194,8 +194,6 @@ resource "google_cloud_run_v2_service" "backend" {
   location   = var.region
   depends_on = [
     google_project_service.services,
-    google_secret_manager_secret_version.freelancer_token_v1,
-    google_secret_manager_secret_version.freelancer_client_id_v1,
   ]
 
   template {
