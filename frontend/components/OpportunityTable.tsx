@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Opportunity } from "@/lib/api";
 import { ScoreBadge } from "./ScoreBadge";
+import { UrgencyBadge } from "./UrgencyBadge";
 
 interface OpportunityTableProps {
   opportunities: Opportunity[];
@@ -26,6 +27,16 @@ const AREA_COLORS: Record<string, string> = {
   Cloud: "bg-sky-100 text-sky-700",
 };
 
+function ClientBadge({ verified, score }: { verified: boolean; score: number }) {
+  if (!verified && score <= 50) return null;
+  const color = score >= 70 ? "text-green-600" : "text-yellow-600";
+  return (
+    <span className={`text-xs ${color}`} title={`Score do cliente: ${Math.round(score)}`}>
+      {verified ? "✓" : "~"}{Math.round(score)}
+    </span>
+  );
+}
+
 export function OpportunityTable({ opportunities }: OpportunityTableProps) {
   if (opportunities.length === 0) {
     return (
@@ -46,6 +57,7 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
             <th className="px-4 py-3 text-left">Área</th>
             <th className="px-4 py-3 text-left">Plataforma</th>
             <th className="px-4 py-3 text-left">Orçamento</th>
+            <th className="px-4 py-3 text-left">Cliente</th>
             <th className="px-4 py-3 text-left">Ação</th>
           </tr>
         </thead>
@@ -53,7 +65,16 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
           {opportunities.map((opp) => (
             <tr key={opp.id} className="hover:bg-gray-50 transition-colors">
               <td className="px-4 py-3">
-                <ScoreBadge score={opp.score} decision={opp.decision} />
+                <div className="flex flex-col gap-1">
+                  <ScoreBadge score={opp.score} decision={opp.decision} />
+                  {opp.urgency !== "normal" && (
+                    <UrgencyBadge
+                      urgency={opp.urgency}
+                      proposalsCount={opp.proposals_count}
+                      postedAt={opp.posted_at}
+                    />
+                  )}
+                </div>
               </td>
               <td className="px-4 py-3 max-w-xs">
                 <Link
@@ -64,16 +85,15 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
                 </Link>
               </td>
               <td className="px-4 py-3">
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    AREA_COLORS[opp.area] || "bg-gray-100 text-gray-600"
-                  }`}
-                >
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${AREA_COLORS[opp.area] || "bg-gray-100 text-gray-600"}`}>
                   {opp.area}
                 </span>
               </td>
               <td className="px-4 py-3 text-gray-500 capitalize">{opp.source}</td>
               <td className="px-4 py-3 text-gray-700 font-mono text-xs">{formatBudget(opp)}</td>
+              <td className="px-4 py-3">
+                <ClientBadge verified={opp.client_payment_verified ?? false} score={opp.client_score ?? 50} />
+              </td>
               <td className="px-4 py-3">
                 <a
                   href={opp.url}
@@ -81,7 +101,7 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline text-xs"
                 >
-                  Ver vaga →
+                  Ver →
                 </a>
               </td>
             </tr>

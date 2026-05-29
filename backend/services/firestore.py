@@ -46,3 +46,12 @@ class FirestoreService:
 
     def update_opportunity(self, opportunity_id: str, fields: dict) -> None:
         self.col.document(opportunity_id).update(fields)
+
+    def save_outcome(self, outcome: dict) -> str:
+        doc_ref = self.db.collection("outcomes").document()
+        doc_ref.set(outcome)
+        return doc_ref.id
+
+    def list_outcomes(self, limit: int = 500) -> list[dict]:
+        docs = self.db.collection("outcomes").limit(limit).get()
+        return [{"id": doc.id, **doc.to_dict()} for doc in docs]

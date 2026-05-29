@@ -26,12 +26,26 @@ export interface Opportunity {
   skills_required: string[];
   language: string;
   collected_at: string;
-  // Fase 2
+  // Fraude
   fraud_risk: number;
   fraud_flags: string[];
+  // Cliente
+  client_score: number;
+  client_hire_rate: number | null;
+  client_payment_verified: boolean;
+  client_total_spent: number | null;
+  // Competição & timing
+  proposals_count: number | null;
+  posted_at: string | null;
+  urgency: "quente" | "normal" | "frio";
+  // Propostas
   proposal: string | null;
+  proposal_direct: string | null;
+  proposal_consultive: string | null;
   suggested_price: number | null;
   estimated_hours: number | null;
+  // Aprendizado
+  win_probability: number | null;
 }
 
 export interface CollectResult {
@@ -44,8 +58,18 @@ export interface CollectResult {
 
 export interface ProposalResult {
   proposal: string;
+  proposal_direct: string;
+  proposal_consultive: string;
   suggested_price: number | null;
   estimated_hours: number | null;
+}
+
+export interface WinRateStats {
+  win_rate: number | null;
+  total: number;
+  won: number;
+  lost: number;
+  no_response: number;
 }
 
 export async function listOpportunities(params?: {
@@ -85,5 +109,24 @@ export async function recalculateOpportunity(id: string): Promise<Opportunity> {
 export async function generateProposal(id: string): Promise<ProposalResult> {
   const res = await fetch(`${API_URL}/api/opportunities/${id}/proposal`, { method: "POST" });
   if (!res.ok) throw new Error(`Proposal generation failed: ${res.status}`);
+  return res.json();
+}
+
+export async function recordOutcome(
+  id: string,
+  outcome: "ganhou" | "perdeu" | "sem_resposta",
+  notes = ""
+): Promise<void> {
+  const res = await fetch(`${API_URL}/api/opportunities/${id}/outcome`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ opportunity_id: id, outcome, notes, recorded_at: new Date().toISOString() }),
+  });
+  if (!res.ok) throw new Error(`Record outcome failed: ${res.status}`);
+}
+
+export async function getWinRate(): Promise<WinRateStats> {
+  const res = await fetch(`${API_URL}/api/stats/win-rate`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Win rate failed: ${res.status}`);
   return res.json();
 }
