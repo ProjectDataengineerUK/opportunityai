@@ -196,6 +196,10 @@ resource "google_cloud_run_v2_service" "backend" {
     google_project_service.services,
   ]
 
+  lifecycle {
+    ignore_changes = [template[0].containers[0].image]
+  }
+
   template {
     service_account = google_service_account.backend_sa.email
 
@@ -257,6 +261,10 @@ resource "google_cloud_run_v2_service" "frontend" {
   name       = "opportunityai-frontend"
   location   = var.region
   depends_on = [google_cloud_run_v2_service.backend]
+
+  lifecycle {
+    ignore_changes = [template[0].containers[0].image]
+  }
 
   template {
     containers {
