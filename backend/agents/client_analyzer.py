@@ -63,6 +63,10 @@ class ClientAnalyzer:
             return self._remoteok(job.raw_data)
         if job.source == "remotive":
             return self._remotive(job.raw_data)
+        if job.source == "upwork":
+            return self._upwork(job.raw_data)
+        if job.source == "workana":
+            return self._workana(job.raw_data)
         return self._default()
 
     def _freelancer(self, data: dict) -> ClientAnalysis:
@@ -141,6 +145,62 @@ class ClientAnalyzer:
             total_spent=None,
             proposals_count=None,
             posted_at=posted_at,
+            urgency=urgency,
+        )
+
+    def _upwork(self, data: dict) -> ClientAnalysis:
+        client = data.get("client") or {}
+
+        spent = (client.get("totalSpent") or {}).get("rawValue")
+        total_spent = float(spent) if spent not in (None, "") else None
+
+        payment_verified = client.get("verificationStatus") == "VERIFIED"
+
+        applicants = data.get("totalApplicants")
+        proposals_count = int(applicants) if applicants is not None else None
+
+        created = data.get("createdDateTime")
+        posted_at = None
+        if created:
+            try:
+                posted_at = datetime.fromisoformat(str(created).replace("Z", "+00:00"))
+                if posted_at.tzinfo is None:
+                    posted_at = posted_at.replace(tzinfo=timezone.utc)
+            except (ValueError, TypeError):
+                pass
+
+        score = _score_from_signals(None, payment_verified, total_spent)
+        urgency = _urgency(posted_at, proposals_count)
+        return ClientAnalysis(
+            score=score,
+            hire_rate=None,
+            payment_verified=payment_verified,
+            total_spent=total_spent,
+            proposals_count=proposals_count,
+            posted_at=posted_at,
+            urgency=urgency,
+        )
+
+    def _workana(self, data: dict) -> ClientAnalysis:
+        # Workana expõe poucos sinais e datas relativas ("Ontem"), então a urgência
+        # é guiada pelo número de propostas (ex.: "Propostas: 56").
+        payment_verified = bool(data.get("hasVerifiedPaymentMethod", False))
+
+        proposals_count = None
+        bids_raw = data.get("totalBids")
+        if bids_raw:
+            digits = "".join(ch for ch in str(bids_raw) if ch.isdigit())
+            proposals_count = int(digits) if digits else None
+
+        score = _score_from_signals(None, payment_verified, None)
+        urgency = _urgency(None, proposals_count)
+        return ClientAnalysis(
+            score=score,
+            hire_rate=None,
+            payment_verified=payment_verified,
+            total_spent=None,
+            proposals_count=proposals_count,
+            posted_at=None,
             urgency=urgency,
         )
 

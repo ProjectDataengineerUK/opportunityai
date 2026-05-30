@@ -11,7 +11,7 @@ export interface ScoreBreakdown {
 export interface Opportunity {
   id: string;
   external_id: string;
-  source: "remoteok" | "remotive" | "freelancer";
+  source: "remoteok" | "remotive" | "freelancer" | "upwork" | "workana";
   title: string;
   description: string;
   area: string;

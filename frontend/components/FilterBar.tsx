@@ -2,7 +2,7 @@
 
 const AREAS = ["IA", "Dados", "Python", "Backend", "Automação", "Cloud", "Irrelevante"];
 const DECISIONS = ["APLICAR", "AVALIAR", "IGNORAR"];
-const SOURCES = ["remoteok", "remotive", "freelancer"];
+const SOURCES = ["remoteok", "remotive", "freelancer", "upwork", "workana"];
 
 interface FilterBarProps {
   area: string;

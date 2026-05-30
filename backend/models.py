@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Literal
 
+SourceName = Literal["remoteok", "remotive", "freelancer", "upwork", "workana"]
+
 
 class ScoreBreakdown(BaseModel):
     skill_match: float
@@ -13,7 +15,7 @@ class ScoreBreakdown(BaseModel):
 
 class RawJob(BaseModel):
     external_id: str
-    source: Literal["remoteok", "remotive", "freelancer"]
+    source: SourceName
     title: str
     description: str
     budget_min: float | None = None
@@ -27,7 +29,7 @@ class RawJob(BaseModel):
 class Opportunity(BaseModel):
     id: str | None = None
     external_id: str
-    source: Literal["remoteok", "remotive", "freelancer"]
+    source: SourceName
     title: str
     description: str
     budget_min: float | None = None

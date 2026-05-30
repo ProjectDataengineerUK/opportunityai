@@ -33,3 +33,5 @@ sources:
   remoteok: true
   remotive: true
   freelancer: true
+  upwork: false   # requer UPWORK_TOKEN (OAuth2) — desativado por padrão
+  workana: true

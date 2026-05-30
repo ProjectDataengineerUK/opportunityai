@@ -4,6 +4,8 @@ from config import AppConfig
 from agents.sources.remoteok import RemoteOKSource
 from agents.sources.remotive import RemotiveSource
 from agents.sources.freelancer import FreelancerSource
+from agents.sources.upwork import UpworkSource
+from agents.sources.workana import WorkanaSource
 
 ACCEPTED_LANGUAGES = {"pt", "en"}
 
@@ -20,6 +22,10 @@ class Collector:
             tasks.append(RemotiveSource().fetch())
         if self.config.sources.freelancer:
             tasks.append(FreelancerSource(self.config.freelancer_token).fetch())
+        if self.config.sources.upwork:
+            tasks.append(UpworkSource(self.config.upwork_token, self.config.upwork_org_id).fetch())
+        if self.config.sources.workana:
+            tasks.append(WorkanaSource().fetch())
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 

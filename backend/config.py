@@ -13,6 +13,8 @@ class SourcesConfig(BaseModel):
     remoteok: bool = True
     remotive: bool = True
     freelancer: bool = True
+    upwork: bool = False
+    workana: bool = True
 
 
 class AppConfig(BaseModel):
@@ -23,6 +25,8 @@ class AppConfig(BaseModel):
     sources: SourcesConfig
     freelancer_client_id: str = ""
     freelancer_token: str = ""
+    upwork_token: str = ""
+    upwork_org_id: str = ""
     gcp_project_id: str = ""
     gcp_location: str = "us-central1"
 
@@ -38,6 +42,8 @@ def get_config() -> AppConfig:
 
     data["freelancer_client_id"] = os.getenv("FREELANCER_CLIENT_ID", "")
     data["freelancer_token"] = os.getenv("FREELANCER_TOKEN", "")
+    data["upwork_token"] = os.getenv("UPWORK_TOKEN", "")
+    data["upwork_org_id"] = os.getenv("UPWORK_ORG_ID", "")
     data["gcp_project_id"] = os.getenv("GCP_PROJECT_ID", "")
     data["gcp_location"] = os.getenv("GCP_LOCATION", "us-central1")
 
