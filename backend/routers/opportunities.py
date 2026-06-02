@@ -6,6 +6,7 @@ from services.gemini import GeminiClient
 from agents.classifier import Classifier
 from agents.evaluator import Evaluator
 from agents.proposal_generator import ProposalGenerator
+from agents.win_predictor import build_history_stats, features_from_opportunity, predict_win_probability
 from models import RawJob, ProposalOutcome
 from config import get_config
 
@@ -71,6 +72,30 @@ async def recalculate_opportunity(opportunity_id: str):
     area = await asyncio.to_thread(classifier.classify, raw.title, raw.description)
     opportunity = await asyncio.to_thread(evaluator.evaluate, raw, area)
 
+    config = get_config()
+    learning = config.learning
+    try:
+        outcomes = await asyncio.to_thread(firestore_svc.list_outcomes)
+        opps_by_id = await asyncio.to_thread(firestore_svc.opportunities_by_id)
+        win_history = build_history_stats(
+            outcomes,
+            opps_by_id,
+            no_response_weight=learning.no_response_weight,
+        )
+    except Exception:
+        win_history = {}
+
+    opp_dict = opportunity.model_dump()
+    opp_dict["urgency"] = doc.get("urgency", "normal")
+    opp_dict["client_payment_verified"] = doc.get("client_payment_verified", False)
+    features = features_from_opportunity(opp_dict)
+    win_prob = predict_win_probability(
+        features,
+        win_history,
+        laplace_alpha=learning.laplace_alpha,
+        min_samples=learning.min_samples,
+    )
+
     updated = {
         "area": opportunity.area,
         "score": opportunity.score,
@@ -78,6 +103,7 @@ async def recalculate_opportunity(opportunity_id: str):
         "decision": opportunity.decision,
         "summary": opportunity.summary,
         "skills_required": opportunity.skills_required,
+        "win_probability": win_prob,
     }
     firestore_svc.update_opportunity(opportunity_id, updated)
 
@@ -128,6 +154,36 @@ async def record_outcome(opportunity_id: str, body: ProposalOutcome):
     firestore_svc.save_outcome(outcome_data)
 
     return {"status": "recorded"}
+
+
+@router.post("/stats/refresh-win-probabilities")
+async def refresh_win_probabilities():
+    """Recalculate win_probability for all stored opportunities using current outcomes."""
+    firestore_svc = get_firestore()
+    config = get_config()
+    learning = config.learning
+
+    outcomes = await asyncio.to_thread(firestore_svc.list_outcomes)
+    opps_by_id = await asyncio.to_thread(firestore_svc.opportunities_by_id)
+    win_history = build_history_stats(
+        outcomes,
+        opps_by_id,
+        no_response_weight=learning.no_response_weight,
+    )
+
+    updated_count = 0
+    for opp_id, opp in opps_by_id.items():
+        features = features_from_opportunity(opp)
+        win_prob = predict_win_probability(
+            features,
+            win_history,
+            laplace_alpha=learning.laplace_alpha,
+            min_samples=learning.min_samples,
+        )
+        firestore_svc.update_opportunity(opp_id, {"win_probability": win_prob})
+        updated_count += 1
+
+    return {"updated": updated_count}
 
 
 @router.get("/stats/win-rate")

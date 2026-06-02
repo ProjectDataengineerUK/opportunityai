@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Opportunity } from "@/lib/api";
 import { ScoreBadge } from "./ScoreBadge";
 import { UrgencyBadge } from "./UrgencyBadge";
+import { WinChanceBadge } from "./WinChanceBadge";
 
 interface OpportunityTableProps {
   opportunities: Opportunity[];
@@ -58,6 +59,7 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
             <th className="px-4 py-3 text-left">Plataforma</th>
             <th className="px-4 py-3 text-left">Orçamento</th>
             <th className="px-4 py-3 text-left">Cliente</th>
+            <th className="px-4 py-3 text-left">Chance</th>
             <th className="px-4 py-3 text-left">Ação</th>
           </tr>
         </thead>
@@ -93,6 +95,9 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
               <td className="px-4 py-3 text-gray-700 font-mono text-xs">{formatBudget(opp)}</td>
               <td className="px-4 py-3">
                 <ClientBadge verified={opp.client_payment_verified ?? false} score={opp.client_score ?? 50} />
+              </td>
+              <td className="px-4 py-3">
+                <WinChanceBadge probability={opp.win_probability} />
               </td>
               <td className="px-4 py-3">
                 <a

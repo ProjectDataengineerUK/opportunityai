@@ -17,12 +17,19 @@ class SourcesConfig(BaseModel):
     workana: bool = True
 
 
+class LearningConfig(BaseModel):
+    laplace_alpha: float = 1.0
+    no_response_weight: float = 1.0
+    min_samples: float = 5.0
+
+
 class AppConfig(BaseModel):
     user_profile: dict
     score_weights: dict
     decision_thresholds: dict
     gemini: GeminiConfig
     sources: SourcesConfig
+    learning: LearningConfig = LearningConfig()
     freelancer_client_id: str = ""
     freelancer_token: str = ""
     upwork_token: str = ""

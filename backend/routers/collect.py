@@ -6,6 +6,7 @@ from agents.classifier import Classifier
 from agents.evaluator import Evaluator
 from agents.fraud_detector import FraudDetector
 from agents.client_analyzer import ClientAnalyzer
+from agents.win_predictor import build_history_stats, features_from_opportunity, predict_win_probability
 from services.firestore import FirestoreService
 from services.gemini import GeminiClient
 from services.telegram import TelegramNotifier
@@ -35,6 +36,20 @@ async def collect_opportunities():
     collector = Collector(config)
 
     raw_jobs = await collector.collect_all()
+
+    # Build win-probability history once per request (RF-WP02).
+    learning = config.learning
+    try:
+        outcomes = await asyncio.to_thread(firestore_svc.list_outcomes)
+        opps_by_id = await asyncio.to_thread(firestore_svc.opportunities_by_id)
+        win_history = build_history_stats(
+            outcomes,
+            opps_by_id,
+            no_response_weight=learning.no_response_weight,
+        )
+    except Exception as exc:
+        logger.warning("win_probability history unavailable: %s", exc)
+        win_history = {}
 
     semaphore = asyncio.Semaphore(MAX_CONCURRENT)
     lock = asyncio.Lock()
@@ -77,6 +92,14 @@ async def collect_opportunities():
                 opportunity.proposals_count = client.proposals_count
                 opportunity.posted_at = client.posted_at
                 opportunity.urgency = client.urgency
+
+                features = features_from_opportunity(opportunity.model_dump())
+                opportunity.win_probability = predict_win_probability(
+                    features,
+                    win_history,
+                    laplace_alpha=learning.laplace_alpha,
+                    min_samples=learning.min_samples,
+                )
 
                 await asyncio.to_thread(firestore_svc.save, opportunity)
                 async with lock:

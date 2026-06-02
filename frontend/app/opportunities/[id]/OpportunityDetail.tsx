@@ -192,6 +192,11 @@ export function OpportunityDetail({ initial }: { initial: Opportunity }) {
           </div>
           <div className="flex flex-col items-end gap-3">
             <ScoreBadge score={opp.score} decision={opp.decision} />
+            {opp.win_probability != null && (
+              <span className="text-xs text-gray-500" title="Chance estimada de fechar, baseada no histórico de desfechos">
+                Chance: <span className="font-semibold text-gray-700">{Math.round(opp.win_probability * 100)}%</span>
+              </span>
+            )}
             <RecalculateButton id={opp.id} onComplete={setOpp} />
           </div>
         </div>

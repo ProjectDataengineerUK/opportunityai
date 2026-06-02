@@ -55,3 +55,8 @@ class FirestoreService:
     def list_outcomes(self, limit: int = 500) -> list[dict]:
         docs = self.db.collection("outcomes").limit(limit).get()
         return [{"id": doc.id, **doc.to_dict()} for doc in docs]
+
+    def opportunities_by_id(self, limit: int = 1000) -> dict[str, dict]:
+        """Return all opportunities keyed by document id, for join with outcomes."""
+        docs = self.col.limit(limit).get()
+        return {doc.id: {"id": doc.id, **doc.to_dict()} for doc in docs}

@@ -35,3 +35,8 @@ sources:
   freelancer: true
   upwork: false   # requer UPWORK_TOKEN (OAuth2) — desativado por padrão
   workana: true
+
+learning:
+  laplace_alpha: 1.0         # Laplace smoothing strength (pseudo-count per class)
+  no_response_weight: 1.0    # how much 'sem_resposta' counts as a loss (0=ignore, 1=full loss)
+  min_samples: 5.0           # min effective outcomes before trusting a segment
