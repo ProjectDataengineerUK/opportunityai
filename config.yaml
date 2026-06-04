@@ -10,9 +10,7 @@ user_profile:
     - APIs REST
     - Cloud GCP
   min_budget_usd: 0   # sem piso — aceita pequenos jobs de qualquer valor
-  languages:
-    - pt
-    - en
+  languages: []   # vazio = aceita qualquer idioma
 
 score_weights:
   skill_match: 0.35

@@ -7,9 +7,6 @@ from agents.sources.freelancer import FreelancerSource
 from agents.sources.upwork import UpworkSource
 from agents.sources.workana import WorkanaSource
 
-ACCEPTED_LANGUAGES = {"pt", "en"}
-
-
 class Collector:
     def __init__(self, config: AppConfig):
         self.config = config
@@ -41,9 +38,11 @@ class Collector:
     def _filter(self, jobs: list[RawJob]) -> list[RawJob]:
         filtered = []
         min_budget = self.config.user_profile.get("min_budget_usd", 0)
+        # Empty/absent languages list = accept any language.
+        accepted_languages = set(self.config.user_profile.get("languages") or [])
 
         for job in jobs:
-            if job.language not in ACCEPTED_LANGUAGES:
+            if accepted_languages and job.language not in accepted_languages:
                 continue
             if job.budget_min is not None and job.budget_max is None:
                 if job.budget_min < min_budget:
