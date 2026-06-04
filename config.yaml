@@ -30,11 +30,13 @@ gemini:
   advanced_model: gemini-2.5-pro
 
 sources:
-  remoteok: true
-  remotive: true
-  freelancer: true
-  upwork: false   # requer UPWORK_TOKEN (OAuth2) — desativado por padrão
-  workana: true
+  # Marketplaces freelance (projetos / pequenos jobs com orçamento e propostas) — o foco do app
+  freelancer: true   # requer FREELANCER_TOKEN (OAuth)
+  workana: true      # funciona sem token (scraping XHR)
+  upwork: false      # requer UPWORK_TOKEN (OAuth2) — desativado por padrão
+  # Job boards de emprego remoto (vaga CLT/full-time, não freelance) — desligados de propósito
+  remoteok: false
+  remotive: false
 
 learning:
   laplace_alpha: 1.0         # Laplace smoothing strength (pseudo-count per class)
