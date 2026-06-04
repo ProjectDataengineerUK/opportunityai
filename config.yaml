@@ -9,7 +9,7 @@ user_profile:
     - Backend
     - APIs REST
     - Cloud GCP
-  min_budget_usd: 200
+  min_budget_usd: 0   # sem piso — aceita pequenos jobs de qualquer valor
   languages:
     - pt
     - en
@@ -33,7 +33,7 @@ sources:
   # Marketplaces freelance (projetos / pequenos jobs com orçamento e propostas) — o foco do app
   freelancer: true   # requer FREELANCER_TOKEN (OAuth)
   workana: true      # funciona sem token (scraping XHR)
-  upwork: false      # requer UPWORK_TOKEN (OAuth2) — desativado por padrão
+  upwork: true       # requer UPWORK_TOKEN (OAuth2) + UPWORK_ORG_ID
   # Job boards de emprego remoto (vaga CLT/full-time, não freelance) — desligados de propósito
   remoteok: false
   remotive: false
