@@ -5,6 +5,44 @@ import { listOpportunities, Opportunity, CollectResult, getWinRate, WinRateStats
 import { OpportunityTable } from "@/components/OpportunityTable";
 import { FilterBar } from "@/components/FilterBar";
 import { CollectButton } from "@/components/CollectButton";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+function StatCard({
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  label: string;
+  value: string | number;
+  hint?: string;
+  accent?: "default" | "green" | "yellow" | "orange";
+}) {
+  const accentText = {
+    default: "text-muted-foreground",
+    green: "text-green-600 dark:text-green-400",
+    yellow: "text-yellow-600 dark:text-yellow-400",
+    orange: "text-orange-600 dark:text-orange-400",
+  }[accent ?? "default"];
+
+  const valueText = {
+    default: "text-foreground",
+    green: "text-green-600 dark:text-green-400",
+    yellow: "text-yellow-600 dark:text-yellow-400",
+    orange: "text-orange-600 dark:text-orange-400",
+  }[accent ?? "default"];
+
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <p className={cn("text-sm", accentText)}>{label}</p>
+        <p className={cn("text-3xl font-bold mt-1 tabular-nums", valueText)}>{value}</p>
+        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function DashboardPage() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -54,90 +92,84 @@ export default function DashboardPage() {
   const aplicar = opportunities.filter((o) => o.decision === "APLICAR").length;
   const avaliar = opportunities.filter((o) => o.decision === "AVALIAR").length;
   const quente = opportunities.filter((o) => o.urgency === "quente").length;
+  const hasWinRate = winRate?.win_rate !== null && winRate?.win_rate !== undefined;
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">OpportunityAI</h1>
-        <p className="text-gray-500 mt-1">Vagas freelance em IA, Dados e Programação — ranqueadas por IA</p>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">
+          Pequenos jobs freelance em IA, Dados e Programação — ranqueados por IA
+        </p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Total de vagas</p>
-          <p className="text-3xl font-bold mt-1">{opportunities.length}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-green-100 p-5 shadow-sm">
-          <p className="text-sm text-green-600">APLICAR agora</p>
-          <p className="text-3xl font-bold mt-1 text-green-700">{aplicar}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-yellow-100 p-5 shadow-sm">
-          <p className="text-sm text-yellow-600">AVALIAR</p>
-          <p className="text-3xl font-bold mt-1 text-yellow-700">{avaliar}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-orange-100 p-5 shadow-sm">
-          <p className="text-sm text-orange-600">
-            {quente > 0 ? "🔥 Vagas quentes" : winRate?.win_rate !== null && winRate?.win_rate !== undefined ? "Taxa de ganho" : "Vagas quentes"}
-          </p>
-          <p className="text-3xl font-bold mt-1 text-orange-700">
-            {quente > 0
-              ? quente
-              : winRate?.win_rate !== null && winRate?.win_rate !== undefined
-              ? `${winRate.win_rate}%`
-              : "—"}
-          </p>
-          {winRate && winRate.total > 0 && quente === 0 && (
-            <p className="text-xs text-gray-400 mt-1">{winRate.total} propostas registradas</p>
-          )}
-        </div>
+        <StatCard label="Total de vagas" value={opportunities.length} />
+        <StatCard label="APLICAR agora" value={aplicar} accent="green" />
+        <StatCard label="AVALIAR" value={avaliar} accent="yellow" />
+        <StatCard
+          label={quente > 0 ? "🔥 Vagas quentes" : hasWinRate ? "Taxa de ganho" : "Vagas quentes"}
+          value={quente > 0 ? quente : hasWinRate ? `${winRate!.win_rate}%` : "—"}
+          accent="orange"
+          hint={
+            winRate && winRate.total > 0 && quente === 0
+              ? `${winRate.total} propostas registradas`
+              : undefined
+          }
+        />
       </div>
 
       {collectError && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-sm font-semibold text-red-800 mb-1">Falha ao coletar vagas</p>
-          <p className="text-sm text-red-700 font-mono">{collectError}</p>
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
+          <p className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">
+            Falha ao coletar vagas
+          </p>
+          <p className="text-sm text-red-700 dark:text-red-400 font-mono">{collectError}</p>
           <p className="text-xs text-red-500 mt-1">
-            Verifique os logs do Cloud Run em: <code>GCP Console → Cloud Run → opportunityai-backend → Logs</code>
+            Verifique os logs em: <code>GCP Console → Cloud Run → opportunityai-backend → Logs</code>
           </p>
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <FilterBar
-            area={area}
-            decision={decision}
-            source={source}
-            onAreaChange={setArea}
-            onDecisionChange={setDecision}
-            onSourceChange={setSource}
-          />
-          <div className="flex items-center gap-4">
-            {lastCollect && lastCollectTime && (
-              <span className="text-xs text-gray-400">
-                {lastCollectTime} — {lastCollect.saved} novas · {lastCollect.skipped_duplicate} dup · {lastCollect.skipped_fraud} fraude
-              </span>
-            )}
-            <CollectButton onComplete={handleCollectComplete} onError={handleCollectError} />
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <FilterBar
+              area={area}
+              decision={decision}
+              source={source}
+              onAreaChange={setArea}
+              onDecisionChange={setDecision}
+              onSourceChange={setSource}
+            />
+            <div className="flex items-center gap-4">
+              {lastCollect && lastCollectTime && (
+                <span className="text-xs text-muted-foreground">
+                  {lastCollectTime} — {lastCollect.saved} novas · {lastCollect.skipped_duplicate} dup ·{" "}
+                  {lastCollect.skipped_fraud} fraude
+                </span>
+              )}
+              <CollectButton onComplete={handleCollectComplete} onError={handleCollectError} />
+            </div>
           </div>
-        </div>
 
-        {fetchError ? (
-          <div className="text-center py-16">
-            <p className="text-red-500 text-sm font-medium">{fetchError}</p>
-            <button
-              onClick={fetchOpportunities}
-              className="mt-3 text-sm text-blue-600 hover:underline"
-            >
-              Tentar novamente
-            </button>
-          </div>
-        ) : loading ? (
-          <div className="text-center py-16 text-gray-400">Carregando vagas…</div>
-        ) : (
-          <OpportunityTable opportunities={opportunities} />
-        )}
-      </div>
+          {fetchError ? (
+            <div className="text-center py-16">
+              <p className="text-red-500 text-sm font-medium">{fetchError}</p>
+              <button
+                onClick={fetchOpportunities}
+                className="mt-3 text-sm text-primary hover:underline"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          ) : loading ? (
+            <div className="text-center py-16 text-muted-foreground">Carregando vagas…</div>
+          ) : (
+            <OpportunityTable opportunities={opportunities} />
+          )}
+        </CardContent>
+      </Card>
     </main>
   );
 }

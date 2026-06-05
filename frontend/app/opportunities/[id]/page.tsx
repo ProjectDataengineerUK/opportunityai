@@ -14,7 +14,7 @@ export default async function OpportunityPage({ params }: PageProps) {
     return (
       <main className="max-w-3xl mx-auto px-4 py-8">
         <p className="text-red-500">Vaga não encontrada.</p>
-        <Link href="/" className="text-blue-600 hover:underline mt-4 block">
+        <Link href="/" className="text-primary hover:underline mt-4 block">
           ← Voltar ao dashboard
         </Link>
       </main>

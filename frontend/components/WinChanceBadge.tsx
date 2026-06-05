@@ -3,11 +3,15 @@ interface WinChanceBadgeProps {
 }
 
 export function WinChanceBadge({ probability }: WinChanceBadgeProps) {
-  if (probability == null) return <span className="text-gray-300">—</span>;
+  if (probability == null) return <span className="text-muted-foreground/50">—</span>;
 
   const pct = Math.round(probability * 100);
   const color =
-    pct >= 65 ? "text-green-600" : pct >= 45 ? "text-yellow-600" : "text-gray-400";
+    pct >= 65
+      ? "text-green-600 dark:text-green-400"
+      : pct >= 45
+      ? "text-yellow-600 dark:text-yellow-400"
+      : "text-muted-foreground";
 
   return (
     <span

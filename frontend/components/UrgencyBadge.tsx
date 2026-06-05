@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+
 interface UrgencyBadgeProps {
   urgency: "quente" | "normal" | "frio";
   proposalsCount?: number | null;
@@ -15,21 +17,21 @@ export function UrgencyBadge({ urgency, proposalsCount, postedAt }: UrgencyBadge
 
   if (urgency === "quente") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full">
+      <Badge variant="hot">
         🔥 Quente
-        {hours !== null && hours < 48 && <span className="text-orange-400">{hours}h</span>}
-      </span>
+        {hours !== null && hours < 48 && <span className="opacity-70">{hours}h</span>}
+      </Badge>
     );
   }
 
   if (urgency === "frio") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full">
+      <Badge variant="muted">
         ❄ Frio
         {proposalsCount !== null && proposalsCount !== undefined && (
-          <span className="text-gray-400">{proposalsCount} bids</span>
+          <span className="opacity-70">{proposalsCount} bids</span>
         )}
-      </span>
+      </Badge>
     );
   }
 

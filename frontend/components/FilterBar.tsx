@@ -2,7 +2,7 @@
 
 const AREAS = ["IA", "Dados", "Python", "Backend", "Automação", "Cloud", "Irrelevante"];
 const DECISIONS = ["APLICAR", "AVALIAR", "IGNORAR"];
-const SOURCES = ["remoteok", "remotive", "freelancer", "upwork", "workana"];
+const SOURCES = ["freelancer", "workana", "upwork", "remoteok", "remotive"];
 
 interface FilterBarProps {
   area: string;
@@ -28,7 +28,7 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="text-sm border border-input rounded-lg px-3 py-1.5 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring dark:[color-scheme:dark]"
     >
       <option value="all">{label}</option>
       {options.map((opt) => (
